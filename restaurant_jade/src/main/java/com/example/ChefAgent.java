@@ -64,63 +64,72 @@ public class ChefAgent extends Agent {
                     protected void onWake() {
                         System.out.println("Chef has finished preparing the order for customer " + customerAID);
 
-                        addBehaviour(new Behaviour() {
-                            private int step = 0;
-                            private MessageTemplate mt;
-
-                            @Override
-                            public void action() {
-                                switch (step) {
-                                    case 0:
-                                        if (waiterAgents == null || waiterAgents.length == 0) {
-                                            break;
-                                        }
-                                        ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
-                                        cfp.addReceiver(waiterAgents[new Random().nextInt(waiterAgents.length)]);
-                                        cfp.setConversationId("order-ready");
-                                        cfp.setContent(customerAID);
-                                        cfp.setReplyWith("order-ready " + System.currentTimeMillis());
-                                        myAgent.send(cfp);
-                                        mt = MessageTemplate.and(MessageTemplate.MatchConversationId("order-ready"),
-                                                MessageTemplate.MatchInReplyTo(cfp.getReplyWith()));
-                                        step = 1;
-
-                                    case 1:
-                                        ACLMessage reply = myAgent.receive(mt);
-                                        if (reply != null) {
-                                            if (reply.getPerformative() == ACLMessage.PROPOSE) {
-                                                ACLMessage order = msg.createReply();
-                                                order.setPerformative(ACLMessage.INFORM);
-                                                order.setConversationId("order-ready");
-                                                order.setContent(customerAID);
-                                                myAgent.send(order);
-                                                step = 2;
-                                            } else {
-                                                // Ask another waiter
-                                                step = 0;
-                                            }
-                                        } else {
-                                            block();
-                                        }
-                                        break;
-
-                                    default:
-                                        break;
-                                }
-                            }
-
-                            @Override
-                            public boolean done() {
-                                return step == 2;
-                            }
-
-                        });
-
+                        addBehaviour(new ServeOrderBehaviour(msg, customerAID));
                     }
                 });
             } else {
                 block();
             }
         }
+    }
+
+    private class ServeOrderBehaviour extends Behaviour {
+        private int step = 0;
+        private MessageTemplate mt;
+        private ACLMessage msg;
+        private String customerAID;
+
+        public ServeOrderBehaviour(ACLMessage msg, String customerAID) {
+            this.msg = msg;
+            this.customerAID = customerAID;
+        }
+
+        @Override
+        public void action() {
+            switch (step) {
+                case 0:
+                    if (waiterAgents == null || waiterAgents.length == 0) {
+                        break;
+                    }
+                    ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
+                    cfp.addReceiver(waiterAgents[new Random().nextInt(waiterAgents.length)]);
+                    cfp.setConversationId("order-ready");
+                    cfp.setContent(customerAID);
+                    cfp.setReplyWith("order-ready " + System.currentTimeMillis());
+                    myAgent.send(cfp);
+                    mt = MessageTemplate.and(MessageTemplate.MatchConversationId("order-ready"),
+                            MessageTemplate.MatchInReplyTo(cfp.getReplyWith()));
+                    step = 1;
+                    break;
+
+                case 1:
+                    ACLMessage reply = myAgent.receive(mt);
+                    if (reply != null) {
+                        if (reply.getPerformative() == ACLMessage.PROPOSE) {
+                            ACLMessage order = msg.createReply();
+                            order.setPerformative(ACLMessage.INFORM);
+                            order.setConversationId("order-ready");
+                            order.setContent(customerAID);
+                            myAgent.send(order);
+                            step = 2;
+                        } else {
+                            // Ask another waiter
+                            step = 0;
+                        }
+                    } else {
+                        block();
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        @Override
+        public boolean done() {
+            return step == 2;
+        }
+
     }
 }
