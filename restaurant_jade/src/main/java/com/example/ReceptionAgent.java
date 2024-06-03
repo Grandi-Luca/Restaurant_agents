@@ -65,7 +65,7 @@ public class ReceptionAgent extends Agent {
 
                 // Send the message to the customer agent
                 reply.setPerformative(ACLMessage.INFORM);
-                reply.setContent("Here is your bill.");
+                reply.setContent("Price: 5$");
                 myAgent.send(reply);
 
                 // Check if there is any customer in the waiting list
