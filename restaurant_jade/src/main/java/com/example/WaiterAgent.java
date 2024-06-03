@@ -114,6 +114,7 @@ public class WaiterAgent extends Agent {
                     } else {
                         block();
                     }
+                    break;
                 case 1:
                     // Receive the message from the chef agent
                     msg = myAgent.receive(mt);
