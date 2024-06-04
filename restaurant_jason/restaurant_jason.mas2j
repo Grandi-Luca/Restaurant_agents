@@ -1,0 +1,21 @@
+/*
+    restaurant_jason
+    ---------------------------
+
+    Jason Application File
+
+    This file defines the initial state of the MAS
+
+    Jason 3.2.0
+    maggio 31, 2024 - 21:17:38
+*/
+
+MAS restaurant_jason {
+
+    agents: customer #10;
+            reception;
+            chef;
+            waiter #4;
+
+    aslSourcePath: "src/agt";
+}
