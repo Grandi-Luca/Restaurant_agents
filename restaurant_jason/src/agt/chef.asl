@@ -56,7 +56,7 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
         .length(Ws) > 0 &
         random_int(.length(Ws), P)
     <-  !normalize_random(P, .length(Ws), X);
-        !waiter(X, 0, Ws, W).
+        !get_waiter(X, 0, Ws, W).
 
 // Failure: no waiter was found wait 4 seconds and try again
 -!search_waiter(W)
@@ -65,10 +65,10 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
         !search_waiter(W).
 
 // Get a waiter in P position
-+!waiter(P, I, [HEAD|TAIL], W)
++!get_waiter(P, I, [HEAD|TAIL], W)
     :   P==I
     <-  W = HEAD.
 
-+!waiter(P,I, [HEAD|TAIL], W)
++!get_waiter(P,I, [HEAD|TAIL], W)
     :   P\==I
-    <-  !waiter(P, I+1, TAIL, W).
+    <-  !get_waiter(P, I+1, TAIL, W).
