@@ -1,7 +1,7 @@
 // Agent chef in project 
 
 /* Initial beliefs and rules */
-random_int(X,Y,Z) :- .random(R) & Z = math.round((R+X)*Y).
+random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
 
 /* Initial goals */
 !register.
@@ -9,12 +9,12 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R+X)*Y).
 /* Plans */
 
 // Normalize random number between X and Y
-+!normalize_random(X, Y, Z)
-    :   X >= Y
++!normalize_random(R, Y, Z)
+    :   R >= Y
     <-  Z = Y - 1.
-+!normalize_random(X, Y, Z)
-    :   X < Y
-    <-  Z = X.
++!normalize_random(R, Y, Z)
+    :   R < Y
+    <-  Z = R.
 
 // Register chef in DF
 +!register 

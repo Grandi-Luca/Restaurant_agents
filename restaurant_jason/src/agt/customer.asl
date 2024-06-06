@@ -4,7 +4,7 @@
 interlocutor(reception).
 reply_count(0).
 
-random_int(X,Y,Z) :- .random(R) & Z = math.round((R+X)*Y).
+random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
 
 /* Initial goals */
 !have_a_seat.
@@ -65,12 +65,12 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R+X)*Y).
     <-  !waiter(P, I+1, TAIL, W).
 
 // Normalize random number between X and Y
-+!normalize_random(X, Y, Z)
-    :   X >= Y
++!normalize_random(R, Y, Z)
+    :   R >= Y
     <-  Z = Y - 1.
-+!normalize_random(X, Y, Z)
-    :   X < Y
-    <-  Z = X.
++!normalize_random(R, Y, Z)
+    :   R < Y
+    <-  Z = R.
 
 
 +waiter_refuse[source(A)]
