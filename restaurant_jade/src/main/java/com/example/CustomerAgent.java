@@ -19,6 +19,7 @@ public class CustomerAgent extends Agent {
     private AID[] waiterAgents;
     private AID receptionAgent;
     private AID waiterAgent;
+    private boolean find_waiter = false;
 
     protected void setup() {
         System.out.println("Customer agent " + getAID().getName() + " is ready.");
@@ -28,6 +29,10 @@ public class CustomerAgent extends Agent {
 
         addBehaviour(new TickerBehaviour(this, 1000) {
             protected void onTick() {
+                if (find_waiter) {
+                    removeBehaviour(this);
+                    return;
+                }
                 // System.out.println("Check if there are any waiter agents available");
                 // Update the list of waiter agents available
                 DFAgentDescription template = new DFAgentDescription();
@@ -161,6 +166,7 @@ public class CustomerAgent extends Agent {
                             // Waiter available
                             waiterAgent = replyWaiter.getSender();
                             step = 5;
+                            find_waiter = true;
                         } else {
                             // Waiter was busy
                             step = 3;
