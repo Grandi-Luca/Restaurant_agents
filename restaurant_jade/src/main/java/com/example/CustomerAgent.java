@@ -19,13 +19,15 @@ public class CustomerAgent extends Agent {
     private AID[] waiterAgents;
     private AID receptionAgent;
     private AID waiterAgent;
-    private boolean find_waiter = false;
+    private boolean find_waiter;
 
     protected void setup() {
         System.out.println("Customer agent " + getAID().getName() + " is ready.");
-
+        
         // Get the reception agent AID
         receptionAgent = new AID("reception", AID.ISLOCALNAME);
+        
+        find_waiter = false;
 
         addBehaviour(new TickerBehaviour(this, 1000) {
             protected void onTick() {
@@ -70,10 +72,21 @@ public class CustomerAgent extends Agent {
         private int step = 0;
         private MessageTemplate mt; // The template to receive replies
         private int repliesCnt = 0; // The counter of replies from reception agents
+        private static final int REQUEST_TABLE_PHASE = 0;
+        private static final int WAIT_TABLE_PHASE = 1;
+        private static final int TAKE_SEAT_PHASE = 2;
+        private static final int READY_TO_ORDER_PHASE = 3;
+        private static final int WAITER_PHASE = 4;
+        private static final int ORDER_PHASE = 5;
+        private static final int EAT_PHASE = 6;
+        private static final int REQUEST_BILL_PHASE = 7;
+        private static final int PAY_BILL_PHASE = 8;
+        private static final int LEAVE_PHASE = 9;
+
 
         public void action() {
             switch (step) {
-                case 0:
+                case REQUEST_TABLE_PHASE:
                     // Ask at the reception agent if there are tables available
                     ACLMessage request = new ACLMessage(ACLMessage.REQUEST);
                     request.addReceiver(receptionAgent);
@@ -85,11 +98,11 @@ public class CustomerAgent extends Agent {
                     mt = MessageTemplate.and(
                             MessageTemplate.MatchConversationId("table-request"),
                             MessageTemplate.MatchInReplyTo(request.getReplyWith()));
-                    step = 1;
+                    step = WAIT_TABLE_PHASE;
                     System.out.println("Customer " + getAID().getLocalName() + " is waiting for a table");
                     break;
 
-                case 1:
+                case WAIT_TABLE_PHASE:
                     // Manage the response from the reception agent
                     ACLMessage reply = myAgent.receive(mt);
                     if (reply != null) {
@@ -98,9 +111,9 @@ public class CustomerAgent extends Agent {
                                 reply.getPerformative() == ACLMessage.INFORM) {
                             // Table available
                             System.out.println("Table available");
-                            step = 2;
+                            step = TAKE_SEAT_PHASE;
                         } else if (reply.getPerformative() == ACLMessage.FAILURE) {
-                            step = 9;
+                            step = LEAVE_PHASE;
                         } else {
                             if (repliesCnt == 0) {
                                 // Table not available
@@ -119,7 +132,7 @@ public class CustomerAgent extends Agent {
                                 leave.setContent("I'm leaving");
                                 leave.setConversationId("customer-leaving");
                                 myAgent.send(leave);
-                                step = 9;
+                                step = LEAVE_PHASE;
                             }
                         }
                     } else {
@@ -127,19 +140,19 @@ public class CustomerAgent extends Agent {
                     }
                     break;
 
-                case 2:
+                case TAKE_SEAT_PHASE:
                     // Take a seat, check the menu
                     System.out.println("Customer " + getAID().getLocalName() + " takes a seat and check the menu");
 
                     // waiting time to simulate the customer reading the menu
                     doWait(10000);
-                    step = 3;
+                    step = READY_TO_ORDER_PHASE;
                     System.out.println(
                             "Customer " + getAID().getLocalName() + " is ready to order, try to call a waiter");
 
                     break;
 
-                case 3:
+                case READY_TO_ORDER_PHASE:
                     if (waiterAgents == null || waiterAgents.length == 0) {
                         System.out.println("There are no waiter agents available");
                         break;
@@ -154,10 +167,10 @@ public class CustomerAgent extends Agent {
                     // Prepare the template to get proposals
                     mt = MessageTemplate.and(MessageTemplate.MatchConversationId("customer-ready-to-order"),
                             MessageTemplate.MatchInReplyTo(cfp.getReplyWith()));
-                    step = 4;
+                    step = WAITER_PHASE;
                     break;
 
-                case 4:
+                case WAITER_PHASE:
                     // Wait for the response from the waiter
                     ACLMessage replyWaiter = myAgent.receive(mt);
                     if (replyWaiter != null) {
@@ -165,18 +178,18 @@ public class CustomerAgent extends Agent {
                         if (replyWaiter.getPerformative() == ACLMessage.PROPOSE) {
                             // Waiter available
                             waiterAgent = replyWaiter.getSender();
-                            step = 5;
+                            step = ORDER_PHASE;
                             find_waiter = true;
                         } else {
                             // Waiter was busy
-                            step = 3;
+                            step = READY_TO_ORDER_PHASE;
                         }
                     } else {
                         block();
                     }
                     break;
 
-                case 5:
+                case ORDER_PHASE:
                     System.out.println("Customer " + getAID().getName() + " is ordering");
                     // Send the order to the waiter
                     ACLMessage order = new ACLMessage(ACLMessage.INFORM);
@@ -191,10 +204,10 @@ public class CustomerAgent extends Agent {
                             MessageTemplate.and(
                                     MessageTemplate.MatchConversationId("order-ready"),
                                     MessageTemplate.MatchInReplyTo(order.getReplyWith())));
-                    step = 6;
+                    step = EAT_PHASE;
                     break;
 
-                case 6:
+                case EAT_PHASE:
                     // Wait for the order to be served and eat
                     ACLMessage replyOrder = myAgent.receive(mt);
                     if (replyOrder != null) {
@@ -203,7 +216,7 @@ public class CustomerAgent extends Agent {
                         // waiting time to simulate the customer eating
                         doWait(10000);
                         System.out.println("Customer " + getAID().getLocalName() + " finished eating");
-                        step = 7;
+                        step = REQUEST_BILL_PHASE;
 
                     } else {
                         block();
@@ -211,7 +224,7 @@ public class CustomerAgent extends Agent {
 
                     break;
 
-                case 7:
+                case REQUEST_BILL_PHASE:
                     // Ask for the bill
                     System.out.println("Customer " + getAID().getLocalName() + " asks for the bill");
                     // Send the request to the reception
@@ -227,17 +240,17 @@ public class CustomerAgent extends Agent {
                             MessageTemplate.and(
                                     MessageTemplate.MatchConversationId("bill-request"),
                                     MessageTemplate.MatchInReplyTo(bill.getReplyWith())));
-                    step = 8;
+                    step = PAY_BILL_PHASE;
                     break;
 
-                case 8:
+                case PAY_BILL_PHASE:
                     // Wait for the bill and pay it
                     ACLMessage replyBill = myAgent.receive(mt);
                     if (replyBill != null) {
                         // Bill received
                         System.out.println("Bill received");
                         System.out.println("Customer " + getAID().getLocalName() + " pays the bill");
-                        step = 9;
+                        step = LEAVE_PHASE;
 
                     } else {
                         block();
@@ -251,7 +264,7 @@ public class CustomerAgent extends Agent {
         }
 
         public boolean done() {
-            if (step == 9) {
+            if (step == LEAVE_PHASE) {
                 System.out.println("Customer " + getAID().getLocalName() + " is leaving");
             }
             return step == 9;

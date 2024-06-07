@@ -63,7 +63,6 @@ public class ChefAgent extends Agent {
                 addBehaviour(new WakerBehaviour(myAgent, (new Random().nextInt(1, 7) * 1000)) {
                     protected void onWake() {
                         System.out.println("Chef has finished preparing the order for customer " + customerAID);
-
                         addBehaviour(new ServeOrderBehaviour(msg, customerAID));
                     }
                 });
@@ -78,6 +77,8 @@ public class ChefAgent extends Agent {
         private MessageTemplate mt;
         private ACLMessage msg;
         private String customerAID;
+        private static final int REQUEST_PHASE = 0;
+        private static final int RESPONSE_PHASE = 1;
 
         public ServeOrderBehaviour(ACLMessage msg, String customerAID) {
             this.msg = msg;
@@ -87,7 +88,7 @@ public class ChefAgent extends Agent {
         @Override
         public void action() {
             switch (step) {
-                case 0:
+                case REQUEST_PHASE:
                     if (waiterAgents == null || waiterAgents.length == 0) {
                         break;
                     }
@@ -99,10 +100,10 @@ public class ChefAgent extends Agent {
                     myAgent.send(cfp);
                     mt = MessageTemplate.and(MessageTemplate.MatchConversationId("order-ready"),
                             MessageTemplate.MatchInReplyTo(cfp.getReplyWith()));
-                    step = 1;
+                    step = RESPONSE_PHASE;
                     break;
 
-                case 1:
+                case RESPONSE_PHASE:
                     ACLMessage reply = myAgent.receive(mt);
                     if (reply != null) {
                         if (reply.getPerformative() == ACLMessage.PROPOSE) {
@@ -111,10 +112,10 @@ public class ChefAgent extends Agent {
                             order.setConversationId("order-ready");
                             order.setContent(customerAID);
                             myAgent.send(order);
-                            step = 2;
+                            step = RESPONSE_PHASE + 1;
                         } else {
                             // Ask another waiter
-                            step = 0;
+                            step = REQUEST_PHASE;
                         }
                     } else {
                         block();
