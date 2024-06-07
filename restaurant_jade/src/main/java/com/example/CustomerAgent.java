@@ -266,8 +266,9 @@ public class CustomerAgent extends Agent {
         public boolean done() {
             if (step == LEAVE_PHASE) {
                 System.out.println("Customer " + getAID().getLocalName() + " is leaving");
+                myAgent.doDelete();
             }
-            return step == 9;
+            return step == LEAVE_PHASE;
         }
 
     }
