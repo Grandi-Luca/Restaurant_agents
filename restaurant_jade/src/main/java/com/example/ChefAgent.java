@@ -29,6 +29,7 @@ public class ChefAgent extends Agent {
                 DFAgentDescription template = new DFAgentDescription();
                 ServiceDescription sd = new ServiceDescription();
                 sd.setType("waiter-available");
+                sd.setName("JADE-water-available");
                 template.addServices(sd);
                 try {
                     DFAgentDescription[] result = DFService.search(myAgent, template);
