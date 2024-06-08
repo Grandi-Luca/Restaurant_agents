@@ -31,12 +31,15 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
         random_int(1, 15, Z)
     <-  -interlocutor(reception);
         .print("I will have a seat.");
+        .print("Checking the menu...");
         .wait(Z*1000);  // check the menu
+        .print("After checking the menu, I am ready to order.");
         +order("Spaghetti carbonara");
         !ready_to_order.
 
 +!ready_to_order
     <-  !search_waiter(W);
+        .print("Find a waiter: ", W);
         .send(W, tell, customer_ready);
         +interlocutor(W).
 
@@ -75,12 +78,13 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
 
 +waiter_refuse[source(A)]
     :   interlocutor(Other) & 
-        provider(A,Other)
-    <-  !ready_to_order.
+        A = Other
+    <-  .print("Waiter was busy, I will ask to someone else.");
+        !ready_to_order.
 
 +waiter_propose[source(A)]
     :   interlocutor(Other) &
-        provider(A,Other)
+        A = Other
     <-  !send_order(A).
 
 // Send order to waiter

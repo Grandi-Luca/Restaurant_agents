@@ -19,14 +19,17 @@ busy(false).
 // Handle the request from the customer ready to order
 +customer_ready[source(A)]
     :   busy(B) & B = false
-    <-  .send(A,tell,waiter_propose);
+    <-  .print("I can take the order from the customer.");
+        .send(A,tell,waiter_propose);
         +current_customer(A);
+        !deregister;
         -busy(false);
         +busy(true).
 
 +customer_ready[source(A)]
     :   busy(B) & B = true
-    <-  .send(A,tell,waiter_refuse).
+    <-  .print("I'm busy right now, I can't take the order from the customer.");
+        .send(A,tell,waiter_refuse).
 
 // Handle the request from the customer to take the order
 +take_order(Order)[source(A)]
@@ -34,6 +37,7 @@ busy(false).
     <-  .send(chef,tell,request_order(Order, A));
         -busy(true);
         +busy(false);
+        !register;
         -current_customer(A).
 
 // Handle the request from the Chef to take the order
@@ -45,9 +49,16 @@ busy(false).
 +order_ready[source(A)]
     :   provider(A, "chef") &
         busy(B) & B = false
-    <-  .send(A,tell,propose).
+    <-  .print("I can take the order from the chef.");
+        -busy(false);
+        +busy(true);
+        !deregister;
+        .send(A,tell,propose).
 
 // Handle the request from the Chef to serve the order
 +serve_order(Order, Customer)[source(A)]
     :   provider(A, "chef")
-    <-  .send(Customer,tell,recive_order(Order)).
+    <-  .send(Customer,tell,recive_order(Order));
+        -busy(true);
+        +busy(false);
+        !register.

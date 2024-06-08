@@ -12,7 +12,7 @@
 
 MAS restaurant_jason {
 
-    agents: customer #10;
+    agents: customer;
             reception;
             chef;
             waiter #4;

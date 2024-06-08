@@ -32,15 +32,15 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
 +!order_ready(Order, Customer) 
     <-  .print("Order ready: ", Order);
         !search_waiter(Waiter);
-        .send(Waiter, cfp, order_ready);
-        +interlocutor(Waiter, O, C).
+        .send(Waiter, tell, order_ready);
+        +interlocutor(Waiter, Order, Customer).
 
 // Chef receives a propose to serve an order from waiter
 +propose[source(W)]
     :   interlocutor(Waiter, O, C) & Waiter = W
     <-  .send(W, tell, serve_order(O, C));
         -interlocutor(Waiter, O, C);
-        -order_in_progress(Order, Customer).
+        -order_in_progress(O, C).
 
 // Chef receives a refuse to serve an order from waiter
 +refuse[source(W)]
@@ -54,7 +54,7 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
     :   .print("Searching for waiter") &
         .df_search("waiter", Ws) &
         .length(Ws) > 0 &
-        random_int(.length(Ws), P)
+        random_int(0, .length(Ws), P)
     <-  !normalize_random(P, .length(Ws), X);
         !get_waiter(X, 0, Ws, W).
 

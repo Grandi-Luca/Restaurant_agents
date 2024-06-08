@@ -8,23 +8,25 @@ price(_Service,X) :- .random(R) & X = (10*R)+100.
 
 /* Plans */
 
-// Table available
-+request_table[source(A)]
-    :   table_available(N) & N <= 0
-    <-  .send(A,tell,refuse_table);
-        waiting_list(A).
-
 // Table not available
 +request_table[source(A)]
+    :   table_available(N) & N <= 0
+    <-  .print("No Table available");
+        .send(A,tell,refuse_table);
+        waiting_list(A).
+
+// Table available
++request_table[source(A)]
     :   table_available(N) & N > 0
-    <-  .send(A,tell,confirm_table);
+    <-  .print("There is a table available");
+        .send(A,tell,confirm_table);
         -table_avilable(N);
         +table_avilable(N-1).
 
 // Send bill to the customer
 +bill(Order)[source(A)]
     :   price(Order,X)
-    <-  .send(A,tell,inform_bill(X));
+    <-  .send(A,tell,receive_bill(X));
         !pop_waiting_list.
 
 // Assign table to one customer from the waiting list
