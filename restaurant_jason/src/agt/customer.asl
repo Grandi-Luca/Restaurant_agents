@@ -39,14 +39,13 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
 
 +!ready_to_order
     <-  !search_waiter(W);
-        .print("Find a waiter: ", W);
         .send(W, tell, customer_ready);
         +interlocutor(W).
 
 
 // Try to find a waiter
 +!search_waiter(W)
-    :   .print("Searching for waiter") &
+    :   .print("Searching for available waiters...") &
         .df_search("waiter", Ws) &
         .length(Ws) > 0 &
         random_int(0, .length(Ws), P)
@@ -82,30 +81,32 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
     <-  .print("Waiter was busy, I will ask to someone else.");
         !ready_to_order.
 
+-waiter_refuse[source(A)]. // Remove the refuse message
+
 +waiter_propose[source(A)]
     :   interlocutor(Other) &
         A = Other
     <-  !send_order(A).
 
+-waiter_propose[source(A)]. // Remove the propose message
+
 // Send order to waiter
 +!send_order(Waiter) 
     :   order(Order)
-    <-  .send(Waiter, tell, take_order(Order));
-        .print("Order taken: ", Order);
+    <-  .wait(5000); // simulate the time talk to order
+        .send(Waiter, tell, take_order(Order));
         -interlocutor(Waiter).
     
 +recive_order(Order) <-
     .print("Order recived: ", Order);
     .wait(10000);
+    .print("finished eating. I will ask for the bill.");
     +interlocutor(reception);
     !request_bill.
 
 +!request_bill : interlocutor(Other) & Other = reception & order(O) <-
-    .print("Pay the bill.");
     .send(Other, tell, bill(O)).
 
 +receive_bill(Bill) <-
     .print("Bill received: ", Bill);
-    .wait(5000);
     .print("Leaving the restaurant.").
-    

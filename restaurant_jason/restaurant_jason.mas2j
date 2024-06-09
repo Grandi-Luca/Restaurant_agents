@@ -12,10 +12,10 @@
 
 MAS restaurant_jason {
 
-    agents: customer;
+    agents: customer #4;
             reception;
             chef;
-            waiter #4;
+            waiter #1;
 
     aslSourcePath: "src/agt";
 }

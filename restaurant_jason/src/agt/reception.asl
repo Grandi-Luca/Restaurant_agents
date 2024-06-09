@@ -2,26 +2,29 @@
 
 /* Initial beliefs and rules */
 table_available(3).
-price(_Service,X) :- .random(R) & X = (10*R)+100.
+price(_Service,X) :- .random(R) & X = (10*R)+30.
 
 /* Initial goals */
 
 /* Plans */
 
-// Table not available
+// Handle request for table
 +request_table[source(A)]
-    :   table_available(N) & N <= 0
-    <-  .print("No Table available");
-        .send(A,tell,refuse_table);
-        waiting_list(A).
+    <-  -request_table[source(A)];
+        !check_table(A).
 
 // Table available
-+request_table[source(A)]
++!check_table(A)
     :   table_available(N) & N > 0
-    <-  .print("There is a table available");
-        .send(A,tell,confirm_table);
-        -table_avilable(N);
-        +table_avilable(N-1).
+    <-  -table_available(N);
+        +table_available(N-1);
+        .send(A,tell,confirm_table).
+
+// Table not available
+-!check_table(A)
+    <-  .print("Table not available for customer ",A);
+        +waiting_list(A);
+        .send(A,tell,refuse_table).
 
 // Send bill to the customer
 +bill(Order)[source(A)]
@@ -32,12 +35,11 @@ price(_Service,X) :- .random(R) & X = (10*R)+100.
 // Assign table to one customer from the waiting list
 +!pop_waiting_list
     :   waiting_list(X)
-    <-  .send(X,tell,confirm_table);
+    <-  .print("Assigning table to customer ",X);
+        .send(X,tell,confirm_table);
         -waiting_list(X).
 
--!pop_waiting_list
-    <-  .print("waiting list empty").
-
+-!pop_waiting_list.
 
 +customer_leaving[source(A)]
     :   waiting_list(X) & X=A

@@ -18,47 +18,44 @@ busy(false).
 
 // Handle the request from the customer ready to order
 +customer_ready[source(A)]
-    :   busy(B) & B = false
-    <-  .print("I can take the order from the customer.");
-        .send(A,tell,waiter_propose);
-        +current_customer(A);
-        !deregister;
-        -busy(false);
-        +busy(true).
+    <-  -customer_ready[source(A)];
+        !check_availability(A).
 
-+customer_ready[source(A)]
-    :   busy(B) & B = true
-    <-  .print("I'm busy right now, I can't take the order from the customer.");
-        .send(A,tell,waiter_refuse).
++!check_availability(A)
+    :   busy(B) & B = false
+    <-  !deregister;
+        -busy(false);
+        +busy(true);
+        .print("I'm available for the agent ", A);
+        .send(A,tell,waiter_propose);
+        +current_interlocutor(A).
+
+-!check_availability(A)
+    <-  .send(A,tell,waiter_refuse).
+
 
 // Handle the request from the customer to take the order
 +take_order(Order)[source(A)]
-    :   current_customer(Ag) & Ag = A
-    <-  .send(chef,tell,request_order(Order, A));
+    :   current_interlocutor(Ag) & Ag = A
+    <-  -take_order(Order)[source(A)];
+        .print("Took the order ", Order, " from the customer ", A);
+        .send(chef,tell,request_order(Order, A));
+        -current_interlocutor(A);
         -busy(true);
         +busy(false);
-        !register;
-        -current_customer(A).
+        !register.
 
 // Handle the request from the Chef to take the order
 +order_ready[source(A)]
-    :   provider(A, "chef") &
-        busy(B) & B = true
-    <-  .send(A,tell,refuse).
+    <-  -order_ready[source(A)];
+        !check_availability(A).
 
-+order_ready[source(A)]
-    :   provider(A, "chef") &
-        busy(B) & B = false
-    <-  .print("I can take the order from the chef.");
-        -busy(false);
-        +busy(true);
-        !deregister;
-        .send(A,tell,propose).
 
 // Handle the request from the Chef to serve the order
 +serve_order(Order, Customer)[source(A)]
     :   provider(A, "chef")
-    <-  .send(Customer,tell,recive_order(Order));
+    <-  -serve_order(Order, Customer)[source(A)];
+        .send(Customer,tell,recive_order(Order));
         -busy(true);
         +busy(false);
         !register.
