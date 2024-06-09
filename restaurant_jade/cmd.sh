@@ -1,0 +1,3 @@
+javac -cp ~/Desktop/jade/lib/jade.jar:. -d classes ./src/main/java/com/example/CustomerAgent.java ./src/main/java/com/example/ChefAgent.java ./src/main/java/com/example/WaiterAgent.java ./src/main/java/com/example/ReceptionAgent.java
+
+java -cp ~/Desktop/jade/lib/jade.jar:classes jade.Boot -gui -agents "chef:com.example.ChefAgent;waiter:com.example.WaiterAgent;reception:com.example.ReceptionAgent;customer1:com.example.CustomerAgent;customer2:com.example.CustomerAgent;customer3:com.example.CustomerAgent;customer4:com.example.CustomerAgent"

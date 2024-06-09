@@ -23,40 +23,13 @@ public class CustomerAgent extends Agent {
 
     protected void setup() {
         System.out.println("Customer agent " + getAID().getName() + " is ready.");
-        
+
         // Get the reception agent AID
         receptionAgent = new AID("reception", AID.ISLOCALNAME);
-        
+
         find_waiter = false;
 
-        addBehaviour(new TickerBehaviour(this, 1000) {
-            protected void onTick() {
-                if (find_waiter) {
-                    removeBehaviour(this);
-                    return;
-                }
-                // System.out.println("Check if there are any waiter agents available");
-                // Update the list of waiter agents available
-                DFAgentDescription template = new DFAgentDescription();
-                ServiceDescription sd = new ServiceDescription();
-                sd.setType("waiter-available");
-                sd.setName("JADE-water-available");
-                template.addServices(sd);
-                try {
-                    DFAgentDescription[] result = DFService.search(myAgent, template);
-                    // System.out.println("Found the following waiter agents:");
-                    waiterAgents = new AID[result.length];
-                    for (int i = 0; i < result.length; ++i) {
-                        waiterAgents[i] = result[i].getName();
-                        // System.out.println(waiterAgents[i].getName());
-                    }
-                } catch (FIPAException fe) {
-                    fe.printStackTrace();
-                }
-            }
-        });
-
-        addBehaviour(new WakerBehaviour(this, new Random().nextInt(1, 8) * 1000) {
+        addBehaviour(new WakerBehaviour(this, new Random().nextInt(8, 10) * 1000) {
             protected void onWake() {
                 addBehaviour(new RequestPerformer());
             }
@@ -84,7 +57,6 @@ public class CustomerAgent extends Agent {
         private static final int PAY_BILL_PHASE = 8;
         private static final int LEAVE_PHASE = 9;
 
-
         public void action() {
             switch (step) {
                 case REQUEST_TABLE_PHASE:
@@ -100,7 +72,7 @@ public class CustomerAgent extends Agent {
                             MessageTemplate.MatchConversationId("table-request"),
                             MessageTemplate.MatchInReplyTo(request.getReplyWith()));
                     step = WAIT_TABLE_PHASE;
-                    System.out.println("Customer " + getAID().getLocalName() + " is waiting for a table");
+                    System.out.println("Customer " + getAID().getLocalName() + ": Waiting for a table");
                     break;
 
                 case WAIT_TABLE_PHASE:
@@ -111,26 +83,28 @@ public class CustomerAgent extends Agent {
                         if (reply.getPerformative() == ACLMessage.CONFIRM ||
                                 reply.getPerformative() == ACLMessage.INFORM) {
                             // Table available
-                            System.out.println("Table available");
+                            System.out.println("Customer " + getAID().getLocalName() + ": Table available");
                             step = TAKE_SEAT_PHASE;
                         } else if (reply.getPerformative() == ACLMessage.FAILURE) {
                             step = LEAVE_PHASE;
                         } else {
                             if (repliesCnt == 0) {
                                 // Table not available
-                                System.out.println("Table not available, I'll wait a bit");
+                                System.out.println("Customer " + getAID().getLocalName()
+                                        + ": Table not available, I'll wait a bit");
                                 // change the message template to wait for a table to be available
                                 mt = MessageTemplate.MatchConversationId("table-available");
                                 repliesCnt++;
 
                             } else {
                                 // No table available
-                                System.out.println("No table available, I'll leave");
+                                System.out.println(
+                                        "Customer " + getAID().getLocalName() + ": No table available, I'll leave");
 
                                 // Tell to the Reception agent that I'm gonna leave
                                 ACLMessage leave = new ACLMessage(ACLMessage.INFORM);
                                 leave.addReceiver(receptionAgent);
-                                leave.setContent("I'm leaving");
+                                leave.setContent("Customer " + getAID().getLocalName() + ": Leaving the restaurant");
                                 leave.setConversationId("customer-leaving");
                                 myAgent.send(leave);
                                 step = LEAVE_PHASE;
@@ -143,19 +117,47 @@ public class CustomerAgent extends Agent {
 
                 case TAKE_SEAT_PHASE:
                     // Take a seat, check the menu
-                    System.out.println("Customer " + getAID().getLocalName() + " takes a seat and check the menu");
+                    System.out.println("Customer " + getAID().getLocalName() + ": Take a seat and check the menu");
 
                     // waiting time to simulate the customer reading the menu
-                    doWait(10000);
+                    doWait(new Random().nextInt(8, 16) * 1000);
                     step = READY_TO_ORDER_PHASE;
+
+                    // Check if there are any waiter agents available
+                    addBehaviour(new TickerBehaviour(myAgent, 2000) {
+                        protected void onTick() {
+                            if (find_waiter) {
+                                removeBehaviour(this);
+                                return;
+                            }
+                            // System.out.println("Check if there are any waiter agents available");
+                            // Update the list of waiter agents available
+                            DFAgentDescription template = new DFAgentDescription();
+                            ServiceDescription sd = new ServiceDescription();
+                            sd.setType("waiter-available");
+                            sd.setName("JADE-water-available");
+                            template.addServices(sd);
+                            try {
+                                DFAgentDescription[] result = DFService.search(myAgent, template);
+                                // System.out.println("Found the following waiter agents:");
+                                waiterAgents = new AID[result.length];
+                                for (int i = 0; i < result.length; ++i) {
+                                    waiterAgents[i] = result[i].getName();
+                                    // System.out.println(waiterAgents[i].getName());
+                                }
+                            } catch (FIPAException fe) {
+                                fe.printStackTrace();
+                            }
+                        }
+                    });
+
                     System.out.println(
-                            "Customer " + getAID().getLocalName() + " is ready to order, try to call a waiter");
+                            "Customer " + getAID().getLocalName() + ": Ready to order, try to call a waiter");
 
                     break;
 
                 case READY_TO_ORDER_PHASE:
                     if (waiterAgents == null || waiterAgents.length == 0) {
-                        System.out.println("There are no waiter agents available");
                         break;
                     }
                     // Send the request to one available waiter
@@ -191,7 +193,7 @@ public class CustomerAgent extends Agent {
                     break;
 
                 case ORDER_PHASE:
-                    System.out.println("Customer " + getAID().getName() + " is ordering");
+                    System.out.println("Customer " + getAID().getLocalName() + ": Ordering");
                     // Send the order to the waiter
                     ACLMessage order = new ACLMessage(ACLMessage.INFORM);
                     order.addReceiver(waiterAgent);
@@ -213,10 +215,10 @@ public class CustomerAgent extends Agent {
                     ACLMessage replyOrder = myAgent.receive(mt);
                     if (replyOrder != null) {
                         // Order served
-                        System.out.println("Customer " + getAID().getLocalName() + " is eating");
+                        System.out.println("Customer " + getAID().getLocalName() + ": Eating");
                         // waiting time to simulate the customer eating
                         doWait(10000);
-                        System.out.println("Customer " + getAID().getLocalName() + " finished eating");
+                        System.out.println("Customer " + getAID().getLocalName() + ": Finished eating");
                         step = REQUEST_BILL_PHASE;
 
                     } else {
@@ -227,7 +229,7 @@ public class CustomerAgent extends Agent {
 
                 case REQUEST_BILL_PHASE:
                     // Ask for the bill
-                    System.out.println("Customer " + getAID().getLocalName() + " asks for the bill");
+                    System.out.println("Customer " + getAID().getLocalName() + ": Asks for the bill");
                     // Send the request to the reception
                     ACLMessage bill = new ACLMessage(ACLMessage.REQUEST);
                     bill.addReceiver(receptionAgent);
@@ -249,8 +251,7 @@ public class CustomerAgent extends Agent {
                     ACLMessage replyBill = myAgent.receive(mt);
                     if (replyBill != null) {
                         // Bill received
-                        System.out.println("Bill received");
-                        System.out.println("Customer " + getAID().getLocalName() + " pays the bill");
+                        System.out.println("Customer " + getAID().getLocalName() + ": Bill received and payed it");
                         step = LEAVE_PHASE;
 
                     } else {
@@ -266,7 +267,7 @@ public class CustomerAgent extends Agent {
 
         public boolean done() {
             if (step == LEAVE_PHASE) {
-                System.out.println("Customer " + getAID().getLocalName() + " is leaving");
+                System.out.println("Customer " + getAID().getLocalName() + ": Leaving the restaurant");
                 myAgent.doDelete();
             }
             return step == LEAVE_PHASE;

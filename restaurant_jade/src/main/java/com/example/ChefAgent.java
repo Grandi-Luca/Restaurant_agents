@@ -59,7 +59,7 @@ public class ChefAgent extends Agent {
                 String order = msg.getContent().split("-")[1];
                 String customerAID = msg.getContent().split("-")[3];
                 System.out
-                        .println("Chef is preparing " + order + " for customer " + customerAID);
+                        .println("Chef is preparing " + order + " for customer: " + customerAID);
 
                 addBehaviour(new WakerBehaviour(myAgent, (new Random().nextInt(1, 7) * 1000)) {
                     protected void onWake() {

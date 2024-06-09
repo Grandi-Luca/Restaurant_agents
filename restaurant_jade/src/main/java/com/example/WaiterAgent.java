@@ -15,9 +15,10 @@ public class WaiterAgent extends Agent {
     private boolean busy = false;
 
     protected void setup() {
-        System.out.println("Waiter agent " + getAID().getName() + " is ready.");
 
-        doWait(10000);
+        doWait(5000);
+
+        System.out.println("Waiter agent " + getAID().getLocalName() + " is ready.");
 
         // Register the waiter service in the yellow pages
         registerWaiter();
@@ -41,6 +42,8 @@ public class WaiterAgent extends Agent {
                 if (busy) {
                     reply.setPerformative(ACLMessage.REFUSE);
                 } else {
+                    System.out.println("Waiter " + getAID().getLocalName() + ": Available to take the order for "
+                            + msg.getSender().getLocalName() + ".");
                     reply.setPerformative(ACLMessage.PROPOSE);
                     deregisterWaiter();
                     addBehaviour(new OrderBehaviour(msg.getSender()));
@@ -153,7 +156,7 @@ public class WaiterAgent extends Agent {
         dfd.addServices(sd);
         try {
             DFService.register(this, dfd);
-            System.out.println("Waiter " + getAID().getName() + " registered in DF.");
+            System.out.println("Waiter " + getAID().getLocalName() + ": Registered in DF.");
         } catch (FIPAException fe) {
             fe.printStackTrace();
         }

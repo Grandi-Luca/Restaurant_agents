@@ -1,5 +1,6 @@
 package com.example;
 
+import java.util.PriorityQueue;
 import java.util.Queue;
 
 import jade.core.AID;
@@ -15,6 +16,8 @@ public class ReceptionAgent extends Agent {
     protected void setup() {
         System.out.println("Reception agent " + getAID().getName() + " is ready.");
 
+        waitingCustomers = new PriorityQueue<>();
+
         // Add the behaviour serving incoming requests for table
         addBehaviour(new TableBehaviour());
 
@@ -28,7 +31,9 @@ public class ReceptionAgent extends Agent {
     private class TableBehaviour extends CyclicBehaviour {
         public void action() {
             // Receive the message from the customer agent
-            MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
+            MessageTemplate mt = MessageTemplate.and(
+                    MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                    MessageTemplate.MatchConversationId("table-request"));
             ACLMessage msg = myAgent.receive(mt);
             if (msg != null) {
                 // Process the message
@@ -72,7 +77,9 @@ public class ReceptionAgent extends Agent {
                 if (!waitingCustomers.isEmpty()) {
                     // Call the first customer in the waiting list
                     ACLMessage callMsg = new ACLMessage(ACLMessage.INFORM);
-                    callMsg.addReceiver(waitingCustomers.poll());
+                    AID waitingCustomer = waitingCustomers.poll();
+                    System.out.println("Table available for " + waitingCustomer.getLocalName());
+                    callMsg.addReceiver(waitingCustomer);
                     callMsg.setConversationId("table-available");
                     myAgent.send(callMsg);
                 } else {
