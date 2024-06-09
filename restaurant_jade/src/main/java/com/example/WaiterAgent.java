@@ -109,8 +109,11 @@ public class WaiterAgent extends Agent {
                         } else {
                             reply.setPerformative(ACLMessage.PROPOSE);
                             deregisterWaiter();
-                            mt = MessageTemplate.and(MessageTemplate.MatchConversationId("order-ready"),
-                                    MessageTemplate.MatchSender(msg.getSender()));
+                            mt = MessageTemplate.and(
+                                    MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                                    MessageTemplate.and(
+                                            MessageTemplate.MatchConversationId("serve-order"),
+                                            MessageTemplate.MatchSender(msg.getSender())));
                             step = 1;
                         }
                         myAgent.send(reply);

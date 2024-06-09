@@ -96,7 +96,6 @@ public class ChefAgent extends Agent {
                     ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
                     cfp.addReceiver(waiterAgents[new Random().nextInt(waiterAgents.length)]);
                     cfp.setConversationId("order-ready");
-                    cfp.setContent(customerAID);
                     cfp.setReplyWith("order-ready " + System.currentTimeMillis());
                     myAgent.send(cfp);
                     mt = MessageTemplate.and(MessageTemplate.MatchConversationId("order-ready"),
@@ -110,7 +109,7 @@ public class ChefAgent extends Agent {
                         if (reply.getPerformative() == ACLMessage.PROPOSE) {
                             ACLMessage order = msg.createReply();
                             order.setPerformative(ACLMessage.INFORM);
-                            order.setConversationId("order-ready");
+                            order.setConversationId("serve-order");
                             order.setContent(customerAID);
                             myAgent.send(order);
                             step = RESPONSE_PHASE + 1;
