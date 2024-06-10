@@ -29,8 +29,8 @@ Questo progetto può essere eseguito utilizzando Jason o Jade. Ecco come fare:
 ### Uso con Jade
 
 1. Naviga nella directory `restaurant_jade` utilizzando `cd restaurant_jade`
-2. Apri il file `cmd.txt`. Troverai due comandi. Il primo comando avrà un percorso al file `jade.jar`. Sostituisci questo percorso con il percorso dove hai installato `jade.jar` nel tuo sistema.
-3. Esegui i due comandi presenti nel file `cmd.txt`
+2. Apri lo script `cmd.sh`. Troverai due comandi. Il primo comando avrà un percorso al file `jade.jar`. Sostituisci questo percorso con il percorso dove hai installato `jade.jar` nel tuo sistema.
+3. Esegui lo script `cmd.sh`
 
 ## Contribuire
 
