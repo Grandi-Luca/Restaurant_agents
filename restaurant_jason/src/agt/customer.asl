@@ -78,17 +78,15 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
 +waiter_refuse[source(A)]
     :   interlocutor(Other) & 
         A = Other
-    <-  .print("Waiter was busy, I will ask to someone else.");
+    <-  -waiter_refuse[source(A)];
+        .print("Waiter was busy, I will ask to someone else.");
         !ready_to_order.
-
--waiter_refuse[source(A)]. // Remove the refuse message
 
 +waiter_propose[source(A)]
     :   interlocutor(Other) &
         A = Other
-    <-  !send_order(A).
-
--waiter_propose[source(A)]. // Remove the propose message
+    <-  -waiter_propose[source(A)];
+        !send_order(A).
 
 // Send order to waiter
 +!send_order(Waiter) 
@@ -96,9 +94,9 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
     <-  .wait(5000); // simulate the time talk to order
         .send(Waiter, tell, take_order(Order));
         -interlocutor(Waiter).
-    
-+recive_order(Order) <-
-    .print("Order recived: ", Order);
+
++receive_order(Order) <-
+    .print("Order received: ", Order);
     .wait(10000);
     .print("finished eating. I will ask for the bill.");
     +interlocutor(reception);

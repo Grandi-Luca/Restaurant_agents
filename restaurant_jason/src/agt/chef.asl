@@ -22,7 +22,12 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
 
 // Response to a new request for an order
 +request_order(Order, Customer)[source(A)]
-    : random_int(1, 10, Z)
+    :   true
+    <-  -request_order(Order, Customer)[source(A)];
+        !handle_request_order(Order, Customer).
+
++!handle_request_order(Order, Customer)
+    :   random_int(1, 10, Z)
     <-  +order_in_progress(Order, Customer);
         .print("Order in progress: ", Order, ". Customer: ", Customer, ". Time: ", Z, " seconds");
         .wait(Z*1000);
@@ -30,7 +35,7 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
 
 // Order is ready
 +!order_ready(Order, Customer) 
-    <-  .print("Order ready: ", Order);
+    <-  .print("Order ready: ", Order, ". Customer: ", Customer);
         !search_waiter(Waiter);
         .send(Waiter, tell, order_ready);
         +interlocutor(Waiter, Order, Customer).
@@ -43,16 +48,12 @@ random_int(X,Y,Z) :- .random(R) & Z = math.round((R*Y)+X).
         -order_in_progress(O, C);
         .send(W, tell, serve_order(O, C)).
 
--waiter_propose[source(W)].
-
 // Chef receives a refuse to serve an order from waiter
 +waiter_refuse[source(W)]
     :   interlocutor(Waiter, O, C) & Waiter = W
     <-  -waiter_refuse[source(W)];
         -interlocutor(W, O, C);
         !order_ready(O, C).
-
--waiter_refuse[source(W)].
     
 
 // Try to find a waiter

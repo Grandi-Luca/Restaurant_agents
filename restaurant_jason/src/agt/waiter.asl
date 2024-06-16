@@ -22,13 +22,13 @@ busy(false).
         !check_availability(A).
 
 +!check_availability(A)
-    :   busy(B) & B = false
-    <-  !deregister;
-        -busy(false);
+    :   busy(false)
+    <-  -busy(false);
         +busy(true);
+        !deregister;
         .print("I'm available for the agent ", A);
-        .send(A,tell,waiter_propose);
-        +current_interlocutor(A).
+        +current_interlocutor(A);
+        .send(A,tell,waiter_propose).
 
 -!check_availability(A)
     <-  .send(A,tell,waiter_refuse).
@@ -55,7 +55,8 @@ busy(false).
 +serve_order(Order, Customer)[source(A)]
     :   provider(A, "chef")
     <-  -serve_order(Order, Customer)[source(A)];
-        .send(Customer,tell,recive_order(Order));
+        .print("Served the order ", Order, " to the customer ", Customer);
+        .send(Customer,tell,receive_order(Order));
         -busy(true);
         +busy(false);
         !register.

@@ -1,7 +1,7 @@
 // Agent reception in project 
 
 /* Initial beliefs and rules */
-table_available(3).
+max_table_available(3).
 price(_Service,X) :- .random(R) & X = (10*R)+30.
 
 /* Initial goals */
@@ -15,9 +15,8 @@ price(_Service,X) :- .random(R) & X = (10*R)+30.
 
 // Table available
 +!check_table(A)
-    :   table_available(N) & N > 0
-    <-  -table_available(N);
-        +table_available(N-1);
+    :   max_table_available(N) & .count(table(_), TO) & N > TO
+    <-  +table(A);
         .send(A,tell,confirm_table).
 
 // Table not available
@@ -30,17 +29,23 @@ price(_Service,X) :- .random(R) & X = (10*R)+30.
 +bill(Order)[source(A)]
     :   price(Order,X)
     <-  .send(A,tell,receive_bill(X));
-        !pop_waiting_list.
+        !pop_waiting_list(A).
 
 // Assign table to one customer from the waiting list
-+!pop_waiting_list
-    :   waiting_list(X)
-    <-  .print("Assigning table to customer ",X);
-        .send(X,tell,confirm_table);
++!pop_waiting_list(A)
+    :   waiting_list(X) & table(A)
+    <-  .send(X,tell,confirm_table);
+        +table(X);
+        -table(A);
+        .print("Assigning table to customer ",X);
         -waiting_list(X).
 
--!pop_waiting_list.
+-!pop_waiting_list(A).
 
 +customer_leaving[source(A)]
+    <-  -customer_leaving[source(A)];
+        !handle_waiting_customer_leaving(A).
+
++!handle_waiting_customer_leaving(A)
     :   waiting_list(X) & X=A
     <-  -waiting_list(A).
